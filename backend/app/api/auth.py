@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from core.auth import register_user, login_user, get_current_user
+from app.core.auth import register_user, login_user, get_current_user
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.core.schema import RegisterRequest

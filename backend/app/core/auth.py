@@ -1,4 +1,4 @@
-from backend.app.core.schema import RegisterRequest, LoginRequest
+from app.core.schema import RegisterRequest, LoginRequest
 import bcrypt, logging
 from app.core.models import User  # Tu modelo SQL/ORM
 from sqlalchemy.orm import Session

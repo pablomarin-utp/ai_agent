@@ -1,8 +1,10 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
+import os, logging
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -26,3 +28,12 @@ def get_db():
         yield db
     finally:
         db.close()
+
+def test_connection():
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))  # Query simple para validar conexión
+            logger.info("✅ Conexión a Supabase exitosa.")
+    except Exception as e:
+        logger.error(f"❌ Error al conectar a Supabase: {e}")
+        raise
