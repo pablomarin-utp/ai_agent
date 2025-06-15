@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tester API - Login y Endpoints Protegidos</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #1a1a2e; color: #e0e0e0; }
+    h2 { color: #9b59b6; }
+    label { display: block; margin-top: 10px; }
+    input, textarea, select, button {
+      font-size: 1rem;
+      margin-top: 5px;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #444;
+      background: #2e2e3e;
+      color: #e0e0e0;
+    }
+    textarea { width: 100%; height: 80px; resize: vertical; }
+    button { cursor: pointer; background: #9b59b6; border: none; }
+    button:disabled { background: #555; cursor: not-allowed; }
+    pre {
+      background: #111;
+      padding: 10px;
+      border-radius: 5px;
+      white-space: pre-wrap;
+      color: #c0c0c0;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .section { border: 1px solid #444; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+    .token-display { word-break: break-all; background: #222; padding: 8px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h2>Tester API - Login y Endpoints Protegidos</h2>
+  
+  <div class="section" id="login-section">
+    <h3>1. Login</h3>
+    <label for="login-url">URL Login (POST):</label>
+    <input type="text" id="login-url" value="http://127.0.0.1:8001/auth/login" />
+
+    <label for="login-email">Email:</label>
+    <input type="email" id="login-email" placeholder="usuario@ejemplo.com" />
+
+    <label for="login-password">Password:</label>
+    <input type="password" id="login-password" placeholder="********" />
+
+    <br>
+    <button id="login-button">Login</button>
+
+    <div id="login-response" style="margin-top:10px;">
+      <strong>Respuesta Login:</strong>
+      <pre id="login-resp-pre">Aquí se mostrará la respuesta...</pre>
+    </div>
+
+    <div id="token-display-container" style="display:none; margin-top:10px;">
+      <strong>Token almacenado:</strong>
+      <div class="token-display" id="token-display"></div>
+      <button id="logout-button" style="margin-top:5px; background:#e74c3c;">Logout</button>
+    </div>
+  </div>
+
+  <div class="section" id="request-section">
+    <h3>2. Probar otro endpoint</h3>
+    <label for="method">Método HTTP:</label>
+    <select id="method">
+      <option>GET</option>
+      <option>POST</option>
+      <option>PUT</option>
+      <option>DELETE</option>
+    </select>
+
+    <label for="url">URL (ej: http://127.0.0.1:8000/chat):</label>
+    <input type="text" id="url" value="http://127.0.0.1:8001/chat" />
+
+    <label for="input-body">Body JSON (solo para POST/PUT):</label>
+    <textarea id="input-body" placeholder='{"prompt":"Hola"}'></textarea>
+
+    <br>
+    <button id="send-button">Enviar petición</button>
+
+    <h3>Respuesta:</h3>
+    <pre id="response">Aquí aparecerá la respuesta...</pre>
+  </div>
+
+  <script>
+    let jwtToken = localStorage.getItem("jwt_token") || "";
+
+    const loginButton = document.getElementById("login-button");
+    const logoutButton = document.getElementById("logout-button");
+    const tokenDisplayContainer = document.getElementById("token-display-container");
+    const tokenDisplay = document.getElementById("token-display");
+    const loginRespPre = document.getElementById("login-resp-pre");
+
+    function showTokenDisplay() {
+      if (jwtToken) {
+        tokenDisplayContainer.style.display = "block";
+        tokenDisplay.textContent = jwtToken;
+      } else {
+        tokenDisplayContainer.style.display = "none";
+      }
+    }
+
+    async function doLogin() {
+      const url = document.getElementById("login-url").value.trim();
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+      if (!url || !email || !password) {
+        alert("Completa URL, email y password.");
+        return;
+      }
+      loginButton.disabled = true;
+      loginRespPre.textContent = "Enviando...";
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        loginRespPre.textContent = JSON.stringify(data, null, 2);
+        if (res.ok && data.access_token) {
+          jwtToken = data.access_token;
+          localStorage.setItem("jwt_token", jwtToken);
+          showTokenDisplay();
+        } else {
+          // Si no vino token, no guardamos
+          jwtToken = "";
+          localStorage.removeItem("jwt_token");
+          showTokenDisplay();
+        }
+      } catch (err) {
+        loginRespPre.textContent = "Error: " + err.message;
+      } finally {
+        loginButton.disabled = false;
+      }
+    }
+
+    async function doLogout() {
+      jwtToken = "";
+      localStorage.removeItem("jwt_token");
+      showTokenDisplay();
+    }
+
+    loginButton.addEventListener("click", doLogin);
+    logoutButton.addEventListener("click", doLogout);
+    showTokenDisplay();
+
+    const sendButton = document.getElementById("send-button");
+    const responsePre = document.getElementById("response");
+
+    async function sendRequest() {
+      const method = document.getElementById("method").value;
+      const url = document.getElementById("url").value.trim();
+      let bodyText = document.getElementById("input-body").value.trim();
+      let options = { method };
+      options.headers = { "Content-Type": "application/json" };
+      if (jwtToken) {
+        options.headers["Authorization"] = `Bearer ${jwtToken}`;
+      }
+      if ((method === "POST" || method === "PUT") && bodyText) {
+        try {
+          options.body = JSON.stringify(JSON.parse(bodyText));
+        } catch {
+          alert("Body no es un JSON válido.");
+          return;
+        }
+      }
+      responsePre.textContent = "Enviando...";
+      sendButton.disabled = true;
+      try {
+        const res = await fetch(url, options);
+        let text;
+        try {
+          text = await res.text();
+          // Intentar parsear JSON si aplica
+          const json = JSON.parse(text);
+          responsePre.textContent = JSON.stringify(json, null, 2);
+        } catch {
+          responsePre.textContent = text;
+        }
+      } catch (err) {
+        responsePre.textContent = "Error: " + err.message;
+      } finally {
+        sendButton.disabled = false;
+      }
+    }
+
+    sendButton.addEventListener("click", sendRequest);
+  </script>
+</body>
+</html>
