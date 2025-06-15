@@ -1,27 +1,18 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from core.auth import register_user, login_user, get_current_user
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from app.core.schema import RegisterRequest
+from app.core.auth import register_user
+from app.core.db import get_db
 
-app = FastAPI()
+router = APIRouter()
 
-@app.post("/login")
-def login(user: BaseModel):
-    """
-    Endpoint to handle user login.
-    """
-    pass
+@router.post("/register")
+async def register(data: RegisterRequest, db: Session = Depends(get_db)):
+    return await register_user(data, db)
 
-
-@app.post("/register")
-def register(user: BaseModel):
-    """
-    Endpoint to handle user registration.
-    """
-    pass
-
-@app.post("/logout")
-def logout(user: BaseModel):
-    """
-    Endpoint to handle user logout.
-    """
-    pass
-
+@router.post("/login")
+async def login(data: RegisterRequest, db: Session = Depends(get_db)):
+    return await login_user(data, db)
