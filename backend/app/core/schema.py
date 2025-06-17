@@ -1,11 +1,15 @@
 from typing import Optional, Literal, List
 from pydantic import BaseModel, Field, EmailStr
-from typing_extensions import TypedDict, Annotated
+from typing_extensions import  Annotated
 from langgraph.graph.message import add_messages
 
-class AgentState(TypedDict):
+class AgentState(BaseModel):
     user_id: str
     messages: Annotated[list, add_messages]
+
+class ExtendedAgentState(AgentState):
+    """Extended state for the agent with additional fields."""
+    conversation_id: str = Field(..., description="ID de la conversación actual")
 
 class RAGQueryInput(BaseModel):
     """Input schema for RAG (Retrieval-Augmented Generation) queries."""

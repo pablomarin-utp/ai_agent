@@ -42,7 +42,7 @@ class ApiService {
         } else if (error.response?.status === 429) {
           const retryAfter = error.response.headers['retry-after'];
           toast.error(`Rate limit exceeded. Try again in ${retryAfter} seconds.`);
-        } else if (error.response?.status >= 500) {
+        } else if (error.response?.status == undefined || error.response?.status >= 500) {
           toast.error('Server error. Please try again later.');
         }
         return Promise.reject(error);
@@ -67,10 +67,15 @@ class ApiService {
   }
 
   // Chat endpoints
-  async sendChatMessage(message: string) {
-    const response = await this.api.post('/chat', { message });
+  async sendChatMessage(userId: string, message: string) {
+    const payload = {
+      user_id: userId,
+      messages: [["user", message]],
+    };
+
+    const response = await this.api.post('/chat', payload);
     return response.data;
-  }
+}
 
   async getChatHistory() {
     const response = await this.api.get('/chat/history');

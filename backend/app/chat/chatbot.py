@@ -1,5 +1,5 @@
 import logging
-from typing import Literal
+from typing import Literal, List, Tuple
 from langgraph.graph import StateGraph, END, START
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.prebuilt import ToolNode
@@ -22,11 +22,11 @@ def initialize_agent_workflow():
     tool_node = ToolNode(tools)
 
     def should_continue(state: AgentState) -> Literal["tools", END]:
-        last_message = state["messages"][-1]
+        last_message = state.messages[-1]
         return "tools" if last_message.tool_calls else END
 
     def call_model(state: AgentState):
-        messages = state["messages"]
+        messages = state.messages
         return {"messages": [model.invoke(messages)]}
 
     workflow = StateGraph(AgentState)
@@ -44,9 +44,19 @@ def initialize_agent_workflow():
     return graph, config
 
 
-def process_user_message(user_id: str, user_input: str, graph, config) -> str:
-    inputs = {"messages": [("user", user_input)]}
-    result = graph.invoke(inputs, config)
-    print(result)  # Para depurar
-    message = result["messages"][-1]
-    return message.content
+def process_user_message(user_id: str, user_input: List[Tuple[str, str]], graph, config) -> str:
+    """
+    Process a user message and return the agent's response.
+    """
+    logger.info(f"Processing message from user {user_id}: {user_input}")
+    try:
+        state = AgentState(user_id=user_id, messages=user_input)
+
+        logger.debug(f"Initial state for user {user_id}: {state}")
+        result = graph.invoke(state.model_dump(), config)
+        return result["messages"][-1].content if result["messages"] else "No response generated."
+
+    except Exception as e:
+        logger.error(f"Error processing message from user {user_id}: {e}")
+        raise e
+

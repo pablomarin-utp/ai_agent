@@ -23,7 +23,7 @@ interface AuthContextType {
 }
 
 interface JWTPayload {
-  sub: string;
+  id: string;
   email: string;
   is_admin: boolean;
   is_active: boolean;
@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (decoded.exp > currentTime) {
           setToken(storedToken);
           setUser({
-            id: decoded.sub,
+            id: decoded.id,
             email: decoded.email,
             is_admin: decoded.is_admin,
             is_active: decoded.is_active,
@@ -102,7 +102,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       const decoded = jwtDecode<JWTPayload>(accessToken);
       setUser({
-        id: decoded.sub,
+        id: decoded.id,
         email: decoded.email,
         is_admin: decoded.is_admin,
         is_active: decoded.is_active,

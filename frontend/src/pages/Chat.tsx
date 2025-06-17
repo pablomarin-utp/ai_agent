@@ -21,7 +21,7 @@ export const Chat: React.FC = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { credits, updateCredits } = useAuth();
+  const { user, credits, updateCredits } = useAuth();
   const { rateLimitState, handleRateLimit } = useRateLimitHandling();
 
   const scrollToBottom = () => {
@@ -41,7 +41,10 @@ export const Chat: React.FC = () => {
       toast.error('No credits remaining. Please upgrade your plan or wait for credit refill.');
       return;
     }
-
+    if (!user?.is_active) {
+      toast.error('Your account is not active. Please contact support.');
+      return;
+    }
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -54,15 +57,15 @@ export const Chat: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Simulate API call (replace with actual API call)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      const chat_message = await apiService.sendChatMessage(user.id, userMessage.content);
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: `I understand you asked: "${userMessage.content}". This is a simulated response for the futuristic AI assistant. In a real implementation, this would connect to your FastAPI backend and process the request through your LLM integration.`,
+        content: chat_message.response,
         timestamp: new Date(),
       };
+
+
 
       setMessages(prev => [...prev, assistantMessage]);
       updateCredits(credits - 1); // Deduct one credit

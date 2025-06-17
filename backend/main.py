@@ -6,7 +6,7 @@ from app.core.db import test_connection
 from contextlib import asynccontextmanager
 
 # Configuración del logger
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 
 @asynccontextmanager
@@ -21,13 +21,19 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+origins = [
+    "http://localhost:5173",  # Vite u otros frontends locales
+    "http://127.0.0.1:5173"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,  # Puedes poner ["*"] si solo estás probando
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 app.include_router(api_router)
 

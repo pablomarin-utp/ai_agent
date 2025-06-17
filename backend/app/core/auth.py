@@ -34,7 +34,7 @@ async def register_user(data: RegisterRequest, db: Session) -> dict:
 
 async def login_user(data: LoginRequest, db: Session) -> dict:
 
-    """Authenticate a user and return a JWT token."""
+    """Authenticate a user and returns a JWT token."""
 
     user = db.query(User).filter(User.email == data.email).first()
     if not user:
@@ -46,7 +46,11 @@ async def login_user(data: LoginRequest, db: Session) -> dict:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials.")
 
     # Generar el JWT
-    access_token = create_access_token(data={"sub": user.email, "user_id": user.id})
+    access_token = create_access_token(data={"email": user.email, 
+                                             "id": str(user.id), 
+                                             "is_active": user.is_active, 
+                                             "is_admin": user.is_admin
+                                             })
 
     logger.info(f"User authenticated successfully: {user.email}")
     return {"access_token": access_token, "token_type": "bearer"}

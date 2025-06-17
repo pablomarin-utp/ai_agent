@@ -40,6 +40,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     onClose();
   };
 
+  // If user is not loaded yet, don't render the sidebar content
+  if (!user) {
+    return null;
+  }
+
   return (
     <>
       {/* Mobile Overlay */}
@@ -58,7 +63,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         initial={{ x: -280 }}
         animate={{ x: isOpen ? 0 : -280 }}
         transition={{ type: 'spring', damping: 20, stiffness: 100 }}
-        className="fixed top-0 left-0 z-50 w-70 h-full glass-effect border-r border-dark-700 lg:translate-x-0 lg:static lg:w-64"
+        className={`
+          fixed top-0 left-0 z-50 w-72 h-full glass-effect border-r border-dark-700
+          lg:static lg:z-auto lg:w-64 lg:h-full lg:block
+          ${isOpen ? 'block' : 'hidden'}
+          lg:block
+        `}
       >
         <div className="flex flex-col h-full p-6">
           {/* Logo */}
@@ -129,12 +139,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             <div className="flex items-center space-x-3 mb-4">
               <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
                 <span className="text-white text-sm font-semibold">
-                  {user?.email.charAt(0).toUpperCase()}
+                  {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">
-                  {user?.email}
+                  {user?.email || 'Unknown User'}
                 </p>
                 <p className="text-xs text-gray-400">
                   {user?.is_admin ? 'Administrator' : 'User'}
